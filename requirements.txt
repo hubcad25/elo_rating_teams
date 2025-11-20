@@ -1,0 +1,30 @@
+# Data fetching and processing
+requests>=2.31.0
+pandas>=2.1.0
+numpy>=1.24.0
+
+# Date handling
+python-dateutil>=2.8.2
+
+# Optimization
+scipy>=1.11.0
+
+# Data storage
+pyarrow>=14.0.0
+
+# Configuration
+python-dotenv>=1.0.0
+
+# Testing
+pytest>=7.4.0
+pytest-cov>=4.1.0
+
+# Code quality
+black>=23.0.0
+flake8>=6.0.0
+mypy>=1.5.0
+
+# Optional: for future dashboard
+# streamlit>=1.28.0
+# plotly>=5.17.0
+# dash>=2.14.0
