@@ -9,96 +9,113 @@ NHL Team Elo Rating System - Calcule des ratings Elo pour les équipes de la LNH
 **Objectif principal**: Optimiser le K-factor du système Elo pour maximiser la précision des prédictions sur 5 saisons (2020-21 à 2024-25).
 
 **Stack technique**:
-- Python pour le pipeline de données et calculs Elo
-- R pour analyses statistiques avancées (optionnel)
+- R pour calculs Elo, optimisation K-factor et visualisations (implémenté)
+- Python pour le pipeline de données NHL API (à implémenter)
 - API NHL officielle (`https://api-web.nhle.com/`) comme source de données
 - Possibilité future d'un dashboard web
 
+**Méthodologie Elo**:
+- Approche **continue**: Les ratings persistent entre les saisons sans reset
+- Pas de régression vers la moyenne entre saisons (peut être ajouté plus tard)
+- Potentiel futur: Ajustement dynamique du K-factor basé sur la continuité du roster
+
 ## Common Commands
 
-### Setup
+### Setup R
+```bash
+# Installer les packages R nécessaires
+R -e "install.packages(c('dplyr', 'lubridate', 'readr', 'ggplot2', 'scales', 'optparse', 'parallel'))"
+```
+
+### Workflow principal (R)
+
+**1. Générer et analyser les données:**
+```bash
+# Lance l'analyse complète avec données mockées
+Rscript scripts/run_elo_analysis.R
+
+# Sortie:
+# - data/processed/final_ratings.csv (ratings finaux)
+# - data/processed/ratings_history.csv (historique complet)
+```
+
+**2. Optimiser le K-factor:**
+```bash
+# Grid search (méthode par défaut)
+Rscript scripts/optimize_k.R --method grid --k-min 10 --k-max 50
+
+# Optimisation bayésienne (plus rapide)
+Rscript scripts/optimize_k.R --method bayesian
+
+# Avec parallélisation
+Rscript scripts/optimize_k.R --method grid --parallel
+
+# Sortie: data/processed/k_factor_optimization.csv
+```
+
+**3. Créer les visualisations:**
+```bash
+# Génère tous les graphiques
+Rscript scripts/create_visualizations.R
+
+# Sortie: plots/*.png
+# - rating_evolution.png: Évolution des ratings Top 10
+# - final_ratings.png: Barplot des ratings finaux
+# - calibration.png: Calibration du modèle
+# - prediction_errors.png: Distribution des erreurs
+# - matchup_matrix.png: Matrice des probabilités de victoire
+```
+
+### Setup Python (futur)
 ```bash
 python -m venv venv
-source venv/bin/activate  # ou `venv\Scripts\activate` sur Windows
+source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-### Data Pipeline
+### Data Pipeline (à implémenter)
 ```bash
-# Récupérer les données NHL (5 dernières saisons)
-python scripts/fetch_nhl_data.py --seasons 5
-
-# Récupérer une saison spécifique
-python scripts/fetch_nhl_data.py --season 20232024
-```
-
-### Elo Calculations
-```bash
-# Calculer les ratings Elo avec K-factor par défaut
-python scripts/calculate_elo.py
-
-# Calculer avec un K-factor spécifique
-python scripts/calculate_elo.py --k-factor 20
-
-# Optimiser le K-factor par validation croisée
-python scripts/optimize_k_factor.py
-```
-
-### Predictions
-```bash
-# Générer des prédictions pour les matchs à venir
-python scripts/predict_matches.py
-
-# Évaluer la précision des prédictions historiques
-python scripts/evaluate_predictions.py
-```
-
-### Testing
-```bash
-# Lancer tous les tests
-pytest
-
-# Tests avec couverture
-pytest --cov=src tests/
-
-# Tester un module spécifique
-pytest tests/test_elo.py
-```
-
-### Code Quality
-```bash
-# Formater le code
-black src/ tests/ scripts/
-
-# Linting
-flake8 src/ tests/ scripts/
-
-# Type checking
-mypy src/
+# Récupérer les données NHL réelles
+python scripts/fetch_nhl_data.py --start-season 2007-08 --end-season 2024-25
 ```
 
 ## Architecture
 
-### Data Flow
-1. **Data Fetching** (`src/data/`) - Récupère les données de l'API NHL
-   - `nhl_api.py`: Client pour l'API NHL officielle
-   - `data_loader.py`: Charge et parse les données des matchs
-   - `preprocessing.py`: Nettoie et transforme les données brutes
+### Modules R (implémentés)
 
-2. **Elo Engine** (`src/elo/`) - Calcule les ratings Elo
-   - `elo_calculator.py`: Implémente le système Elo de base
-   - `k_factor_optimizer.py`: Optimise le K-factor par grid search ou Bayesian optimization
-   - `rating_history.py`: Maintient l'historique des ratings dans le temps
+**Core Elo System** (`src/elo_rating.R`):
+- `calculate_elo_ratings()`: Calcule les ratings pour tous les matchs (approche continue)
+- `expected_score()`: Probabilité de victoire attendue
+- `update_rating()`: Mise à jour du rating après un match
+- `predict_match()`: Prédiction pour un match futur
+- `evaluate_predictions()`: Métriques (Brier score, accuracy, log-loss)
 
-3. **Predictions** (`src/predictions/`) - Génère et évalue les prédictions
-   - `predictor.py`: Utilise les ratings Elo pour prédire les matchs
-   - `evaluator.py`: Calcule les métriques de performance (accuracy, log-loss, Brier score)
-   - `backtesting.py`: Valide le système sur données historiques
+**Data Generation** (`src/generate_mock_data.R`):
+- `generate_mock_nhl_data()`: Génère des données aléatoires simples
+- `generate_realistic_mock_data()`: Génère des données avec équipes de forces variables (recommandé)
+- `save_mock_data()`: Sauvegarde en CSV
 
-4. **Utils** (`src/utils/`) - Fonctions utilitaires
-   - `config.py`: Configuration centralisée
-   - `logger.py`: Logging unifié
-   - `helpers.py`: Fonctions communes
+**K-Factor Optimization** (`src/optimize_k_factor.R`):
+- `time_series_cv()`: Validation croisée time-series (walk-forward)
+- `optimize_k_factor_grid()`: Grid search du K optimal
+- `optimize_k_factor_bayesian()`: Optimisation bayésienne (plus rapide)
+
+**Visualizations** (`src/visualize_elo.R`):
+- `plot_rating_evolution()`: Évolution temporelle des ratings
+- `plot_final_ratings()`: Barplot des ratings finaux
+- `plot_calibration()`: Calibration prédictions vs réalité
+- `plot_prediction_errors()`: Distribution des erreurs
+- `plot_matchup_matrix()`: Heatmap des probabilités entre équipes
+- `save_all_plots()`: Génère tous les graphiques
+
+### Scripts d'exécution
+- `scripts/run_elo_analysis.R`: Pipeline complet (données → calcul → évaluation → sauvegarde)
+- `scripts/optimize_k.R`: Optimisation standalone du K-factor
+- `scripts/create_visualizations.R`: Génération de tous les graphiques
+
+### Modules Python (à implémenter)
+1. **Data Fetching** (`src/data/`) - Récupération NHL API
+2. **Integration** - Convertir données Python → format pour R
 
 ### Key Design Decisions
 

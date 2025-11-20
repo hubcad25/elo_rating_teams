@@ -4,63 +4,96 @@ Système de classement Elo pour mesurer la force relative des équipes de la LNH
 
 ## Objectif
 
-Calculer des ratings Elo pour toutes les équipes NHL en utilisant les données des 5 dernières saisons (2020-21 à 2024-25) et optimiser le K-factor pour maximiser la précision des prédictions.
+Calculer des ratings Elo pour toutes les équipes NHL et optimiser le K-factor pour maximiser la précision des prédictions.
+
+**Période d'analyse**: Depuis 2007-08 (17+ saisons)
+**Approche**: Continue - les ratings persistent entre saisons sans reset
 
 ## Sources de données
 
-- **API NHL officielle**: `https://api-web.nhle.com/`
-- Données des matchs, scores, équipes
+- **API NHL officielle**: `https://api-web.nhle.com/` (intégration à venir)
+- Actuellement: Données mockées réalistes pour développement et tests
 
 ## Structure du projet
 
 ```
 elo_rating_teams/
 ├── src/
-│   ├── data/          # Récupération et traitement des données NHL API
-│   ├── elo/           # Calculs Elo et optimisation K-factor
-│   ├── predictions/   # Système de prédictions
-│   └── utils/         # Utilitaires communs
+│   ├── elo_rating.R          # Système Elo complet (calculs, prédictions, évaluation)
+│   ├── generate_mock_data.R  # Générateur de données fictives
+│   ├── optimize_k_factor.R   # Optimisation du K-factor (grid/bayesian)
+│   └── visualize_elo.R       # Graphiques et visualisations
+├── scripts/
+│   ├── run_elo_analysis.R        # Pipeline complet
+│   ├── optimize_k.R              # Script d'optimisation standalone
+│   └── create_visualizations.R   # Génération de graphiques
 ├── data/
-│   ├── raw/           # Données brutes de l'API
-│   └── processed/     # Données traitées
-├── tests/             # Tests unitaires
-├── notebooks/         # Analyses exploratoires (Jupyter/R)
-└── scripts/           # Scripts d'exécution
+│   ├── raw/           # Données brutes (mockées ou API)
+│   └── processed/     # Ratings et historique (CSV)
+└── plots/             # Visualisations générées (PNG)
 ```
 
 ## Installation
 
+### Prérequis
+- R (version 4.0+)
+- Packages R: dplyr, lubridate, readr, ggplot2, scales, optparse, parallel
+
 ```bash
-python -m venv venv
-source venv/bin/activate  # Linux/Mac
-pip install -r requirements.txt
+# Installer les dépendances R
+R -e "install.packages(c('dplyr', 'lubridate', 'readr', 'ggplot2', 'scales', 'optparse', 'parallel'))"
 ```
 
 ## Utilisation
 
+### 1. Analyse complète (Quick Start)
 ```bash
-# Récupérer les données NHL
-python scripts/fetch_nhl_data.py --seasons 5
-
-# Calculer les ratings Elo
-python scripts/calculate_elo.py
-
-# Optimiser le K-factor
-python scripts/optimize_k_factor.py
-
-# Générer des prédictions
-python scripts/predict_matches.py
+Rscript scripts/run_elo_analysis.R
 ```
+Génère:
+- Ratings Elo pour toutes les équipes
+- Historique complet des ratings
+- Métriques de performance (Brier score, accuracy, log-loss)
+- Exemples de prédictions
+
+### 2. Optimisation du K-factor
+```bash
+# Grid search
+Rscript scripts/optimize_k.R --method grid --k-min 10 --k-max 50
+
+# Plus rapide: Bayesian optimization
+Rscript scripts/optimize_k.R --method bayesian
+```
+
+### 3. Visualisations
+```bash
+Rscript scripts/create_visualizations.R
+```
+Crée 5 graphiques dans `plots/`:
+- Évolution temporelle des ratings
+- Rankings finaux
+- Calibration du modèle
+- Distribution des erreurs
+- Matrice des matchups
 
 ## Méthodologie Elo
 
-Le système Elo calcule un rating pour chaque équipe basé sur:
-- Résultats des matchs (victoire/défaite)
-- Force relative des adversaires
-- K-factor optimisé par validation croisée
+### Formule de base
+```
+Probabilité de victoire: E_A = 1 / (1 + 10^((R_B - R_A) / 400))
+Nouveau rating: R_A' = R_A + K * (Résultat - E_A)
+```
+
+### Caractéristiques
+- **Approche continue**: Les ratings persistent entre saisons (pas de reset annuel)
+- **K-factor optimisé**: Par validation croisée time-series sur ~17 saisons
+- **Métriques**: Brier score, accuracy, log-loss
+- **Validation**: Walk-forward pour éviter le look-ahead bias
 
 ### Prochaines améliorations possibles
-- Ajustement pour avantage domicile
+- Ajustement pour avantage domicile (+50 points Elo?)
+- K-factor dynamique basé sur continuité du roster
 - Pondération margin of victory
 - Différenciation saison régulière vs playoffs
-- Dashboard interactif
+- Dashboard web interactif (Shiny/Streamlit)
+- Intégration API NHL réelle (Python)
