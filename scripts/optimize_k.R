@@ -46,11 +46,11 @@ if (file.exists(opt$data)) {
 
 cat(sprintf("Matchs: %d\n", nrow(matches)))
 cat(sprintf("Méthode: %s\n", opt$method))
-cat(sprintf("Range K: [%d, %d]\n\n", opt$k_min, opt$k_max))
+cat(sprintf("Range K: [%d, %d]\n\n", opt$`k-min`, opt$`k-max`))
 
 # Optimiser
 if (opt$method == "grid") {
-  k_range <- seq(opt$k_min, opt$k_max, by = 2)
+  k_range <- seq(opt$`k-min`, opt$`k-max`, by = 2)
   results <- optimize_k_factor_grid(
     matches_df = matches,
     k_range = k_range,
@@ -61,8 +61,8 @@ if (opt$method == "grid") {
   results <- optimize_k_factor_bayesian(
     matches_df = matches,
     n_iterations = 20,
-    k_min = opt$k_min,
-    k_max = opt$k_max
+    k_min = opt$`k-min`,
+    k_max = opt$`k-max`
   )
 } else {
   stop("Méthode inconnue. Utilisez 'grid' ou 'bayesian'")
